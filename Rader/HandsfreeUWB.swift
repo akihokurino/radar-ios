@@ -23,8 +23,7 @@ class HandsfreeUWB: NSObject, ObservableObject {
     @Published var discoveredPeers = [DiscoveredPeer]()
     @Published var peripherals = [CBPeripheral]()
     @Published var distance: Float = 0.0
-    @Published var receiveTime: String = ""
-
+    
     override init() {
         super.init()
 
@@ -53,8 +52,7 @@ extension HandsfreeUWB: NISessionDelegate {
     func session(_ session: NISession, didUpdate nearbyObjects: [NINearbyObject]) {
         for object in nearbyObjects {
             let discoveredPeer = DiscoveredPeer(token: object.discoveryToken, distance: object.distance ?? 0.0, direction: object.direction)
-            print("PeerInfo: \(discoveredPeer)")
-            distance = discoveredPeer.distance
+            
             if let index = discoveredPeers.firstIndex(where: { $0.token == object.discoveryToken }) {
                 discoveredPeers[index] = discoveredPeer
             } else {
@@ -184,8 +182,6 @@ extension HandsfreeUWB: CBPeripheralDelegate {
 
             let config = NINearbyPeerConfiguration(peerToken: discoveryToken)
             _niSession.run(config)
-
-            receiveTime = Date().description
 
             sendDiscoveryToken()
         } catch {}

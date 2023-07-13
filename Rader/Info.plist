@@ -11,6 +11,7 @@
 	<array>
 		<string>bluetooth-central</string>
 		<string>bluetooth-peripheral</string>
+		<string>nearby-interaction</string>
 	</array>
 </dict>
 </plist>
