@@ -2,7 +2,8 @@ import MultipeerConnectivity
 import NearbyInteraction
 import SwiftUI
 
-class MCUWB: NSObject, ObservableObject {
+// MultipeerConnectivityを使ったNI実装
+class MCUWB: NSObject, UWB {
     private var _niSession: NISession!
     private var _mcSession: MCSession!
     private var _mcPeerID: MCPeerID!
@@ -10,7 +11,7 @@ class MCUWB: NSObject, ObservableObject {
     private var _mcBrowser: MCNearbyServiceBrowser!
 
     @Published var discoveredPeers = [DiscoveredPeer]()
-    
+
     override init() {
         super.init()
 
@@ -21,10 +22,12 @@ class MCUWB: NSObject, ObservableObject {
         _mcSession = MCSession(peer: _mcPeerID, securityIdentity: nil, encryptionPreference: .required)
         _mcSession.delegate = self
 
+        // 検索されるためのサービス
         _mcAdvertiser = MCNearbyServiceAdvertiser(peer: _mcPeerID, discoveryInfo: nil, serviceType: "radar")
         _mcAdvertiser.delegate = self
         _mcAdvertiser.startAdvertisingPeer()
 
+        // 検索するためのサービス
         _mcBrowser = MCNearbyServiceBrowser(peer: _mcPeerID, serviceType: "radar")
         _mcBrowser.delegate = self
         _mcBrowser.startBrowsingForPeers()
@@ -36,7 +39,7 @@ class MCUWB: NSObject, ObservableObject {
         }
 
         let data = try! NSKeyedArchiver.archivedData(withRootObject: discoveryToken, requiringSecureCoding: true)
-        
+
         try! _mcSession.send(data, toPeers: _mcSession.connectedPeers, with: .reliable)
     }
 }
@@ -60,7 +63,9 @@ extension MCUWB: MCSessionDelegate {
         guard state == .connected else { return }
         sendDiscoveryToken()
     }
-
+    
+    // データを受け取った時に呼ばれる
+    // ここで相手のdiscoveryTokenを手にいれる
     func session(_ session: MCSession, didReceive data: Data, fromPeer peerID: MCPeerID) {
         do {
             guard let discoveryToken = try NSKeyedUnarchiver.unarchivedObject(ofClass: NIDiscoveryToken.self, from: data) else {
@@ -97,7 +102,5 @@ extension MCUWB: MCNearbyServiceBrowserDelegate {
     func browser(_ browser: MCNearbyServiceBrowser, lostPeer peerID: MCPeerID) {}
 
     // ブラウジングが失敗した場合に呼ばれる
-    func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {
-        print("Failed to start browsing for peers: \(error.localizedDescription)")
-    }
+    func browser(_ browser: MCNearbyServiceBrowser, didNotStartBrowsingForPeers error: Error) {}
 }

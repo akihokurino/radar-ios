@@ -13,7 +13,7 @@
 		026B23292A5D0FA6003E9951 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 026B23282A5D0FA6003E9951 /* Preview Assets.xcassets */; };
 		02C9E9EE2A5E7C4A00283952 /* CBUWB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02C9E9ED2A5E7C4A00283952 /* CBUWB.swift */; };
 		02F2114E2A67922B00498388 /* MCUWB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02F2114D2A67922B00498388 /* MCUWB.swift */; };
-		02F211502A6792D800498388 /* DiscoveredPeer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02F2114F2A6792D800498388 /* DiscoveredPeer.swift */; };
+		02F211532A67C45B00498388 /* UWB.swift in Sources */ = {isa = PBXBuildFile; fileRef = 02F211522A67C45B00498388 /* UWB.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -25,7 +25,7 @@
 		02C9E9E62A5D189200283952 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		02C9E9ED2A5E7C4A00283952 /* CBUWB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CBUWB.swift; sourceTree = "<group>"; };
 		02F2114D2A67922B00498388 /* MCUWB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MCUWB.swift; sourceTree = "<group>"; };
-		02F2114F2A6792D800498388 /* DiscoveredPeer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscoveredPeer.swift; sourceTree = "<group>"; };
+		02F211522A67C45B00498388 /* UWB.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UWB.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -58,11 +58,9 @@
 		026B23202A5D0FA4003E9951 /* Rader */ = {
 			isa = PBXGroup;
 			children = (
+				02F211512A67C44600498388 /* UWB */,
 				026B23212A5D0FA4003E9951 /* RaderApp.swift */,
 				026B23232A5D0FA4003E9951 /* ContentView.swift */,
-				02F2114F2A6792D800498388 /* DiscoveredPeer.swift */,
-				02C9E9ED2A5E7C4A00283952 /* CBUWB.swift */,
-				02F2114D2A67922B00498388 /* MCUWB.swift */,
 				026B23252A5D0FA6003E9951 /* Assets.xcassets */,
 				02C9E9E62A5D189200283952 /* Info.plist */,
 				026B23272A5D0FA6003E9951 /* Preview Content */,
@@ -76,6 +74,16 @@
 				026B23282A5D0FA6003E9951 /* Preview Assets.xcassets */,
 			);
 			path = "Preview Content";
+			sourceTree = "<group>";
+		};
+		02F211512A67C44600498388 /* UWB */ = {
+			isa = PBXGroup;
+			children = (
+				02F211522A67C45B00498388 /* UWB.swift */,
+				02C9E9ED2A5E7C4A00283952 /* CBUWB.swift */,
+				02F2114D2A67922B00498388 /* MCUWB.swift */,
+			);
+			path = UWB;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -150,9 +158,9 @@
 			files = (
 				02F2114E2A67922B00498388 /* MCUWB.swift in Sources */,
 				02C9E9EE2A5E7C4A00283952 /* CBUWB.swift in Sources */,
+				02F211532A67C45B00498388 /* UWB.swift in Sources */,
 				026B23242A5D0FA4003E9951 /* ContentView.swift in Sources */,
 				026B23222A5D0FA4003E9951 /* RaderApp.swift in Sources */,
-				02F211502A6792D800498388 /* DiscoveredPeer.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

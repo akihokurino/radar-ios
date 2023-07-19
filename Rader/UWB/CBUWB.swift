@@ -5,7 +5,8 @@ import SwiftUI
 let SERVICE_UUID = CBUUID(string: "0000180D-0000-1000-8000-00805F9B34FB")
 let CHARACTERISTIC_UUID = CBUUID(string: "00002A37-0000-1000-8000-00805F9B34FB")
 
-class CBUWB: NSObject, ObservableObject {
+// CoreBluetoothを使ったNI実装
+class CBUWB: NSObject, UWB {
     private var _niSession: NISession!
     private var _peripheral: CBPeripheralManager!
     private var _central: CBCentralManager!
@@ -19,9 +20,11 @@ class CBUWB: NSObject, ObservableObject {
 
         _niSession = NISession()
         _niSession.delegate = self
-
+        
+        // 通知を送るためのマネージャー
         _peripheral = CBPeripheralManager(delegate: self, queue: nil, options: [CBPeripheralManagerOptionShowPowerAlertKey: true])
 
+        // 通知を受け取るためのマネージャー
         _central = CBCentralManager(delegate: self, queue: nil)
         _central.delegate = self
     }
@@ -143,8 +146,7 @@ extension CBUWB: CBPeripheralDelegate {
     }
 
     // Characteristicの更新がかかった時に呼ばれる
-    // ここで相手型のdiscoveryTokenを手にいれる
-    // 受け取った瞬間に自分のも送る（現状1:1のみを想定）
+    // ここで相手のdiscoveryTokenを手にいれる
     func peripheral(_ peripheral: CBPeripheral, didUpdateValueFor characteristic: CBCharacteristic, error: Error?) {
         guard let data = characteristic.value else {
             return
@@ -157,8 +159,6 @@ extension CBUWB: CBPeripheralDelegate {
 
             let config = NINearbyPeerConfiguration(peerToken: discoveryToken)
             _niSession.run(config)
-
-            sendDiscoveryToken()
         } catch {}
     }
 }

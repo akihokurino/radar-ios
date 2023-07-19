@@ -2,5 +2,6 @@
 
 - swiftui
 - combine
-- core bluetooth
 - nearby interaction
+- core bluetooth
+- multipeer connectivity
