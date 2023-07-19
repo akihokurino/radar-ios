@@ -2,7 +2,7 @@ import NearbyInteraction
 import SwiftUI
 
 struct ContentView: View {
-    @ObservedObject var handsfreeUWB = HandsfreeUWB()
+    @ObservedObject var uwb = CBUWB()
     @State var lastValidDirections = [NIDiscoveryToken: SIMD3<Float>]()
 
     var body: some View {
@@ -12,42 +12,25 @@ struct ContentView: View {
                     .stroke(Color.gray, lineWidth: 1)
                     .frame(width: 300, height: 300)
                     .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
-                
-                ForEach(handsfreeUWB.discoveredPeers, id: \.token) { peer in
+
+                if uwb.discoveredPeers.count > 0 {
                     Circle()
                         .fill(Color.red)
                         .frame(width: 10, height: 10)
-                        .offset(offset(for: peer))
+                        .offset(offset(for: uwb.discoveredPeers.last!))
                         .position(x: geometry.size.width / 2, y: geometry.size.height / 2)
                 }
-                
-                VStack {
-                    ForEach(handsfreeUWB.discoveredPeers, id: \.token) { peer in
-                        Text("距離: \(peer.distance)m").padding()
-                        Text("方向: x=\(peer.direction?.x ?? 0.0) y=\(peer.direction?.y ?? 0.0) z=\(peer.direction?.z ?? 0.0)")
+
+                VStack(alignment: .leading) {
+                    if uwb.discoveredPeers.count > 0 {
+                        Text("距離: \(uwb.discoveredPeers.last!.distance)m").font(.caption)
+                        Text("方向: x=\(uwb.discoveredPeers.last!.direction?.x ?? 0.0) y=\(uwb.discoveredPeers.last!.direction?.y ?? 0.0) z=\(uwb.discoveredPeers.last!.direction?.z ?? 0.0)").font(.caption)
+                        Spacer().frame(height: 5)
                     }
-                    
-                    Spacer()
-                    
-                    Button(action: {
-                        handsfreeUWB.sendDiscoveryToken()
-                    }) {
-                        HStack {
-                            Spacer()
-                            Text("セッション開始")
-                                .foregroundColor(Color.white)
-                                .fontWeight(.bold)
-                            Spacer()
-                        }
-                    }
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 15)
-                    .background(Color.blue)
-                    .buttonStyle(PlainButtonStyle())
-                }
+                }.frame(maxWidth: .infinity)
             }
         }
-        .onReceive(handsfreeUWB.$discoveredPeers) { peers in
+        .onReceive(uwb.$discoveredPeers) { peers in
             for peer in peers {
                 if let direction = peer.direction {
                     self.lastValidDirections[peer.token] = direction

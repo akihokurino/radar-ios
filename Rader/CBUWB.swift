@@ -5,25 +5,15 @@ import SwiftUI
 let SERVICE_UUID = CBUUID(string: "0000180D-0000-1000-8000-00805F9B34FB")
 let CHARACTERISTIC_UUID = CBUUID(string: "00002A37-0000-1000-8000-00805F9B34FB")
 
-struct DiscoveredPeer {
-    let token: NIDiscoveryToken
-    let distance: Float
-    let direction: SIMD3<Float>?
-}
-
-class HandsfreeUWB: NSObject, ObservableObject {
+class CBUWB: NSObject, ObservableObject {
     private var _niSession: NISession!
     private var _peripheral: CBPeripheralManager!
     private var _central: CBCentralManager!
     private var _transferCharacteristic: CBMutableCharacteristic!
-    private var connectionAttempts = 0
-    private var scanInterval: TimeInterval = 60.0 // 60秒ごとにスキャンを再開する
-    private var maxConnectionAttempts = 3
+    private var _peripherals = [CBPeripheral]()
 
     @Published var discoveredPeers = [DiscoveredPeer]()
-    @Published var peripherals = [CBPeripheral]()
-    @Published var distance: Float = 0.0
-    
+
     override init() {
         super.init()
 
@@ -36,7 +26,7 @@ class HandsfreeUWB: NSObject, ObservableObject {
         _central.delegate = self
     }
 
-    func sendDiscoveryToken() {
+    private func sendDiscoveryToken() {
         guard let discoveryToken = _niSession.discoveryToken else {
             return
         }
@@ -48,11 +38,11 @@ class HandsfreeUWB: NSObject, ObservableObject {
     }
 }
 
-extension HandsfreeUWB: NISessionDelegate {
+extension CBUWB: NISessionDelegate {
     func session(_ session: NISession, didUpdate nearbyObjects: [NINearbyObject]) {
         for object in nearbyObjects {
             let discoveredPeer = DiscoveredPeer(token: object.discoveryToken, distance: object.distance ?? 0.0, direction: object.direction)
-            
+
             if let index = discoveredPeers.firstIndex(where: { $0.token == object.discoveryToken }) {
                 discoveredPeers[index] = discoveredPeer
             } else {
@@ -60,9 +50,15 @@ extension HandsfreeUWB: NISessionDelegate {
             }
         }
     }
+
+    func session(_ session: NISession, didRemove nearbyObjects: [NINearbyObject], reason: NINearbyObject.RemovalReason) {
+        if let index = discoveredPeers.firstIndex(where: { $0.token == session.discoveryToken }) {
+            discoveredPeers.remove(at: index)
+        }
+    }
 }
 
-extension HandsfreeUWB: CBPeripheralManagerDelegate {
+extension CBUWB: CBPeripheralManagerDelegate {
     // Peripheralの状態が変わった時に呼ばれる
     func peripheralManagerDidUpdateState(_ peripheral: CBPeripheralManager) {
         guard peripheral.state == .poweredOn else { return }
@@ -88,7 +84,7 @@ extension HandsfreeUWB: CBPeripheralManagerDelegate {
     }
 }
 
-extension HandsfreeUWB: CBCentralManagerDelegate {
+extension CBUWB: CBCentralManagerDelegate {
     func peripheralManager(_ peripheral: CBPeripheralManager, central: CBCentral, didSubscribeTo characteristic: CBCharacteristic) {}
 
     // Centralの状態が変わった時に呼ばれる
@@ -106,8 +102,7 @@ extension HandsfreeUWB: CBCentralManagerDelegate {
     // Peripheralが見つかった時に呼ばれる
     // 見つけたPeripheralをCentralに接続する
     func centralManager(_ central: CBCentralManager, didDiscover peripheral: CBPeripheral, advertisementData: [String: Any], rssi RSSI: NSNumber) {
-        peripherals.append(peripheral)
-        connectionAttempts = 0
+        _peripherals.append(peripheral)
         central.connect(peripheral, options: nil)
     }
 
@@ -116,43 +111,23 @@ extension HandsfreeUWB: CBCentralManagerDelegate {
     func centralManager(_ central: CBCentralManager, didConnect peripheral: CBPeripheral) {
         peripheral.delegate = self
         peripheral.discoverServices([SERVICE_UUID])
-        connectionAttempts = 0
+        sendDiscoveryToken()
     }
 
     func centralManager(_ central: CBCentralManager, didFailToConnect peripheral: CBPeripheral, error: Error?) {
-        connectionAttempts += 1 // 接続試行回数を増やす
-
-        if connectionAttempts < maxConnectionAttempts {
-            central.connect(peripheral, options: nil) // 接続試行回数が最大回数未満なら再接続を試みる
-        } else {
-            if let index = peripherals.firstIndex(of: peripheral) {
-                peripherals.remove(at: index) // 最大接続試行回数に達したPeripheralをリストから削除
-            }
+        if let index = _peripherals.firstIndex(of: peripheral) {
+            _peripherals.remove(at: index)
         }
     }
 
     func centralManager(_ central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: Error?) {
-        connectionAttempts += 1 // 接続試行回数を増やす
-
-        if connectionAttempts < maxConnectionAttempts {
-            central.connect(peripheral, options: nil) // 接続試行回数が最大回数未満なら再接続を試みる
-        } else {
-            if let index = peripherals.firstIndex(of: peripheral) {
-                peripherals.remove(at: index) // 最大接続試行回数に達したPeripheralをリストから削除
-            }
-        }
-
-        // 接続が切れたので、指定した間隔後にスキャンを再開
-        DispatchQueue.main.asyncAfter(deadline: .now() + scanInterval) {
-            if central.isScanning {
-                central.stopScan() // もし既にスキャン中なら、一度スキャンを停止
-            }
-            central.scanForPeripherals(withServices: [SERVICE_UUID], options: nil)
+        if let index = _peripherals.firstIndex(of: peripheral) {
+            _peripherals.remove(at: index)
         }
     }
 }
 
-extension HandsfreeUWB: CBPeripheralDelegate {
+extension CBUWB: CBPeripheralDelegate {
     // Peripheralが保持しているServiceを見つけた時に呼ばれる
     // 次に、Serviceの中に含まれているCharacteristicを探す
     func peripheral(_ peripheral: CBPeripheral, didDiscoverServices error: Error?) {
