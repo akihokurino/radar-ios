@@ -2,7 +2,7 @@ import NearbyInteraction
 import SwiftUI
 
 struct ContentView: View {
-    @ObservedObject var uwb = CBUWB()
+    @ObservedObject var uwb = MCUWB()
     @State var lastValidDirections = [NIDiscoveryToken: SIMD3<Float>]()
 
     var body: some View {

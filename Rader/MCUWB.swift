@@ -10,8 +10,7 @@ class MCUWB: NSObject, ObservableObject {
     private var _mcBrowser: MCNearbyServiceBrowser!
 
     @Published var discoveredPeers = [DiscoveredPeer]()
-    @Published var distance: Float = 0.0
-
+    
     override init() {
         super.init()
 
@@ -22,19 +21,23 @@ class MCUWB: NSObject, ObservableObject {
         _mcSession = MCSession(peer: _mcPeerID, securityIdentity: nil, encryptionPreference: .required)
         _mcSession.delegate = self
 
-        _mcAdvertiser = MCNearbyServiceAdvertiser(peer: _mcPeerID, discoveryInfo: nil, serviceType: "handsfree-uwb")
+        _mcAdvertiser = MCNearbyServiceAdvertiser(peer: _mcPeerID, discoveryInfo: nil, serviceType: "radar")
         _mcAdvertiser.delegate = self
+        _mcAdvertiser.startAdvertisingPeer()
 
-        _mcBrowser = MCNearbyServiceBrowser(peer: _mcPeerID, serviceType: "handsfree-uwb")
+        _mcBrowser = MCNearbyServiceBrowser(peer: _mcPeerID, serviceType: "radar")
         _mcBrowser.delegate = self
+        _mcBrowser.startBrowsingForPeers()
     }
 
-    func sendDiscoveryToken() {
+    private func sendDiscoveryToken() {
         guard let discoveryToken = _niSession.discoveryToken else {
             return
         }
 
         let data = try! NSKeyedArchiver.archivedData(withRootObject: discoveryToken, requiringSecureCoding: true)
+        
+        try! _mcSession.send(data, toPeers: _mcSession.connectedPeers, with: .reliable)
     }
 }
 
@@ -66,8 +69,6 @@ extension MCUWB: MCSessionDelegate {
 
             let config = NINearbyPeerConfiguration(peerToken: discoveryToken)
             _niSession.run(config)
-
-//            sendDiscoveryToken()
         } catch {}
     }
 
